@@ -68,8 +68,9 @@ function doPrompt() {
 
     let runcode =  promptForOkTorun()
     if (runcode == "Y") {
-        run()
-
+        curline = 6
+        const count = run()
+        logLine(uiLines.TARGET, green(TARGET) + ": " + count)
         logLine(uiLines.ACTION, green("Finished"))
         console.log()
     } else if (runcode == "P") {
@@ -91,7 +92,12 @@ function run() {
     sortArtistsAndSongs()
 
     logLine(uiLines.ACTION, gold("Copying songs to " + TARGET))
-    writeSongsToFlashDrive(SONGCOUNT)
+    const count = writeSongsToFlashDrive(SONGCOUNT)
+
+    logLine(uiLines.ARTIST)
+    logLine(uiLines.SONG)
+
+    return count
 }
 
 // === Utility MP3 methods
@@ -211,6 +217,7 @@ function writeSongsToFlashDrive(masterCount) {
             }            
         })
     })
+
     return copied
 }
 
