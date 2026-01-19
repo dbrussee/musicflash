@@ -9,6 +9,7 @@ let TARGET = "" // /Volumes/MUSIC/
 const ARTISTS_ORDER = []
 const ARTISTS = {}
 let SONGCOUNT = 0
+const USE_NUMERIC_ORDER_CODE = false // Add '000 ' codes in copied files
 const BAR = "=================================================="
 
 const uiLines = {    
@@ -205,9 +206,13 @@ function writeSongsToFlashDrive(masterCount) {
             if (!fs.existsSync(TARGET + "/" + letter)) {
                 fs.ensureDirSync(TARGET + "/" + letter)
             }
-            let code = file_index + ""
-            while (code.length < 3) { code = "0" + code}
-            const outfile = TARGET + "/" + letter + "/" + artist.folder + "/" + code + " " + file.filename
+            let code = ""
+            if (USE_NUMERIC_ORDER_CODE) {
+                code = file_index + ""
+                while (code.length < 3) { code = "0" + code}
+                code += " "
+            }
+            const outfile = TARGET + "/" + letter + "/" + artist.folder + "/" + code + file.filename
             if (!fs.existsSync(TARGET + "/" + letter + "/" + artist.folder)) {
                 fs.ensureDirSync(TARGET + "/" + letter + "/" + artist.folder)
             }
