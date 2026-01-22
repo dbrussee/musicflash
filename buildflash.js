@@ -2,248 +2,107 @@ const fs = require("fs-extra")
 const process = require("process")
 const path = require("path")
 const { log } = require("console")
+// const prompt = require('inquirer') // <- MUST have that last ()
 const prompt = require('prompt-sync')() // <- MUST have that last ()
 
-let ROOT = "" // /Volumes/Media/Music/
+let SOURCE = "" // /Volumes/Media/Music/
 let TARGET = "" // /Volumes/MUSIC/
+let ISSUE = "" // Global UI issue
 const ARTISTS_ORDER = []
 const ARTISTS = {}
-let SONGCOUNT = 0
+let SOURCECOUNT = -1
+let TARGETCOUNT = -1
 const USE_NUMERIC_ORDER_CODE = false // Add '000 ' codes in copied files
-const BAR = "=================================================="
 
-const uiLines = {    
-    HEADING: { line: 0, prefix: centerInBar("Music Flash Drive v1") },
-    SOURCE: { line: 1, prefix: "Source: " }, // Path to Source
-    TARGET: { line: 2, prefix: "Target: " }, // Path to Target
-    ARTIST: { line: 3, prefix: "Artist: " }, // Current artist
-    SONG: { line: 4, prefix: "Song: " }, // Current Song
-    ACTION: { line: 5, prefix: "Action: " }, // Current activity
-}
-// Which line of the block are we on.
-// When starting, we are on line 0. Once the main block is
-// created, we will be on line 5
-let curline = uiLines.HEADING.line
-
-function main() {
-    setCommandLineOptions()
-    let ok = true
-    if (ROOT == "") {
-        ok = false
-        console.error("No Source of MP3 files given")
-    } else {
-        if (!fs.existsSync(ROOT)) {
-            ok = false
-            console.error("Source location not found")
+const ui = {    
+    initialized: false,
+    lines: {
+        HEADING: { prefix: "-=♩♪♬| Music Flash Drive v1 |♬♪♩=-", value: ''},
+        SOURCE: { prefix: " Source:", value: '' }, // Path to Source
+        TARGET: { prefix: " Target:", value: '' }, // Path to Target
+        ARTIST: { prefix: " Artist:", value: '' }, // Current artist
+        SONG: { prefix: "   Song:", value: '' }, // Current Song
+        ACTION: { prefix: " Action:", value: '' }, // Current activity
+    },
+    draw: (item, value) => {
+        if (!ui.initialized) {
+            console.log(ui.lines.HEADING.prefix)
+            console.log(ui.lines.SOURCE.prefix)
+            console.log(ui.lines.TARGET.prefix)
+            console.log(ui.lines.ARTIST.prefix)
+            console.log(ui.lines.SONG.prefix)
+            console.log(ui.lines.ACTION.prefix)
+            ui.initialized = true
+        } else {
+            process.stdout.write(ui.up(7))
+            process.stdout.write(ui.lineText(ui.lines.SOURCE))
+            process.stdout.write(ui.lineText(ui.lines.TARGET))
+            process.stdout.write(ui.lineText(ui.lines.ARTIST))
+            process.stdout.write(ui.lineText(ui.lines.SONG))
+            process.stdout.write(ui.lineText(ui.lines.ACTION))
+            process.stdout.write(ui.down(1))
         }
+        // process.stdout.write("\r\x1b[1B")
+    },
+    clean: () => {
+        ui.lines.ARTIST.value = ""
+        ui.lines.SONG.value = ""
+        ui.lines.ACTION.value = ""
+        ui.draw()
+    },
+    lineText: (itm) => {
+        let txt = ui.down(1)
+        txt += itm.prefix
+        txt += (itm.value == "" ? "" : " " + itm.value)
+        txt += ui.clearEOL()
+        return txt
+    },
+    plural: (count, text) => {
+        if (count < 1) return ui.gold("No") + " " + text + "s"
+        if (count == 1) return ui.gold(count) + " " + text
+        return ui.gold(count) + " " + text + "s"
+    },
+    save: () => {
+        process.stdout.write("\x1b[s")
+        return ""
+    },
+    restore: () => {
+        process.stdout.write("\x1b[u")
+        return ""
+    },
+    down: (number_of_lines) => {
+        return "\r\x1b[" + number_of_lines + "B"
+    },
+    up: (number_of_lines) => {
+        return "\r\x1b[" + number_of_lines + "A"
+    },
+    clearEOL: () => {
+        return "\x1B[K"
+    },
+    gold: (txt) =>{
+        return "\x1b[1;33m" + txt + "\x1b[0m"
+    },
+    green: (txt) => {
+        return "\x1b[1;32m" + txt + "\x1b[0m"
+    },
+    red: (txt) => {
+        return "\x1b[1;31m" + txt + "\x1b[0m"
     }
-    if (TARGET == "") {
-        ok = false
-        console.error("No Target drive given")
-    } else {
-        if (!fs.existsSync(TARGET)) {
-            ok = false
-            console.error("Target location not found")
-        }
-    }
-    if (!ok) return
-
-    console.log(uiLines.HEADING.prefix)
-    console.log(uiLines.SOURCE.prefix + green(ROOT))
-    console.log(uiLines.TARGET.prefix + green(TARGET))
-    console.log(uiLines.ARTIST.prefix)
-    console.log(uiLines.SONG.prefix)
-    console.log(uiLines.ACTION.prefix)
-    // Currently on PROMPT line
-    curline = 6
-
-    SONGCOUNT = collectFromSource()
-    logLine(uiLines.SOURCE, green(ROOT) + ": " + ARTISTS_ORDER.length + " Artists, " + SONGCOUNT + " Songs")
-    let targetSongCount = collectFromTarget()
-    logLine(uiLines.TARGET, green(TARGET) + ": " + targetSongCount + " Songs")
-
-    doPrompt()
 
 }
-function doPrompt() {
-
-    let runcode =  promptForOkTorun()
-    if (runcode == "Y") {
-        curline = 6
-        const count = run()
-        logLine(uiLines.TARGET, green(TARGET) + ": " + count)
-        logLine(uiLines.ACTION, green("Finished"))
-        console.log()
-    } else if (runcode == "P") {
-        curline = 6
-        purgeDataFromRootFolder(0, TARGET)
-        logLine(uiLines.TARGET, green(TARGET) + ": 0 Songs")
-        doPrompt()
-    } else {
-            // if (!ok) console.log("You entered: '" + (answer != null ? answer : "Ctl-C") + "':")
-
-        console.log("You entered " + gold(runcode) + ": " + red("Aborted"))
-    }
+function promptUser(text) {
+    let answer = prompt(text.trim() + " " + ui.clearEOL())
+    // let answer = prompt("\r" + text.trim() + "\x1B[K ")
+    if (answer == null) answer = "Ctl-C"
+    return answer
 }
 
-main()
-
-function run() {
-
-    sortArtistsAndSongs()
-
-    logLine(uiLines.ACTION, gold("Copying songs to " + TARGET))
-    const count = writeSongsToFlashDrive(SONGCOUNT)
-
-    logLine(uiLines.ARTIST)
-    logLine(uiLines.SONG)
-
-    return count
-}
-
-// === Utility MP3 methods
-function collectFromSource() {
-    logLine(uiLines.ACTION, gold("Reading files from source..."))
-    let count = 0
-    const folders = getDirectoriesInRoot(ROOT)
-    folders.forEach((folder) => {
-        const dir = folder.name
-        if (!ARTISTS[dir]) {
-            ARTISTS_ORDER.push(dir)
-            ARTISTS[dir] = {files:[], folder:dir} // Collection of files
-        }
-        const artist = ARTISTS[dir]
-        const files = getFilesInSourceFolder(dir)
-        files.forEach((item) => {
-            if (!item.name.startsWith('.')) {
-                logLine(uiLines.SOURCE, green(ROOT) + ": " + gold(ARTISTS_ORDER.length) + " Artists, " + gold(count) + " Songs")
-                logLine(uiLines.ARTIST, dir)
-                logLine(uiLines.SONG, item.name)
-                count++
-                artist.files.push({
-                    source: dir + "/" + item.name,
-                    folder:dir, 
-                    filename:item.name
-                })
-            }
-        })
-    })
-    return count
-}
-function collectFromTarget() {
-    logLine(uiLines.ACTION, gold("Reading files from target..."))
-    let count = 0
-    const letters = getDirectoriesInRoot(TARGET)
-    letters.forEach((letter) => {
-        const artists = getDirectoriesInRoot(TARGET + "/" + letter.name)
-        artists.forEach((artist) => {
-            const files = getFilesInTargetFolder(letter.name, artist.name)
-            files.forEach(item => {
-                if (!item.name.startsWith('.')) {
-                    count++
-                    logLine(uiLines.TARGET, green(TARGET) + ": " + gold(count) + " Songs")
-                    logLine(uiLines.ARTIST, artist.name)
-                    logLine(uiLines.SONG, item.name)
-                }
-
-            })
-        })
-    })
-    return count
-}
-
-function sortArtistsAndSongs() {
-    ARTISTS_ORDER.sort()
-    ARTISTS_ORDER.forEach((dir) => {
-        const artist = ARTISTS[dir]
-        let first = artist.folder.substring(0,1).toUpperCase()
-        if ("ABCDEFGHIJ<LMNOPQRSTUVWXYZ".indexOf(first) < 0) first = "#"
-        artist.files.sort((a,b) => {
-            return a.title < b.title
-        })
-    })
-    return 0
-}
-
-function purgeDataFromRootFolder(count, path, folder) {
-    // path guaranteed to NOT end with a slash
-    logLine(uiLines.ACTION, gold("Purging " + count))
-    const root = path + (folder ? "/" + folder : "")
-    const entries = fs.readdirSync(root + "/", { withFileTypes: true })
-    entries.forEach((entry) => {
-        if (!entry.name.startsWith(".")) {
-            if (entry.isDirectory()) {
-                count = purgeDataFromRootFolder(count, root, entry.name)
-                fs.removeSync(root + "/" + entry.name)
-            } else {
-                count++
-                fs.removeSync(root + "/" + entry.name)
-                logLine(uiLines.ACTION, gold("Purging " + count))
-                logLine(uiLines.ARTIST, folder)
-                logLine(uiLines.SONG, entry.name)
-            }
-        }
-    })
-    return count
-}
-function writeSongsToFlashDrive(masterCount) {
-    let progress = 0
-    let copied = 0
-    ARTISTS_ORDER.forEach((dir, artist_index) => {
-        const artist = ARTISTS[dir]
-        const letter = artist.folder.substring(0,1)
-        let code = letter
-        if (artist_index < 100) code += "0"
-        if (artist_index < 10) code += "0"
-        code += artist_index
-        artist.files.forEach((file, file_index) => {
-            progress++
-            const status = "Copying " + progress + " of " + SONGCOUNT + ' songs: ' + ((progress / SONGCOUNT) * 100).toFixed(2) + "%"
-            logLine(uiLines.ARTIST, artist.folder)
-            logLine(uiLines.SONG, file.filename)
-            logLine(uiLines.ACTION, status)
-
-            if (!fs.existsSync(TARGET + "/" + letter)) {
-                fs.ensureDirSync(TARGET + "/" + letter)
-            }
-            let code = ""
-            if (USE_NUMERIC_ORDER_CODE) {
-                code = file_index + ""
-                while (code.length < 3) { code = "0" + code}
-                code += " "
-            }
-            const outfile = TARGET + "/" + letter + "/" + artist.folder + "/" + code + file.filename
-            if (!fs.existsSync(TARGET + "/" + letter + "/" + artist.folder)) {
-                fs.ensureDirSync(TARGET + "/" + letter + "/" + artist.folder)
-            }
-            if (!fs.existsSync(outfile)) {
-                fs.copySync(ROOT + "/" + file.source, outfile)
-                copied++
-            }            
-        })
-    })
-
-    return copied
-}
-
-// === File System methods
 function getDirectoriesInRoot(location) {
     try {
         const entries = fs.readdirSync(location, { withFileTypes: true })
         const dirs = entries
             .filter(entry => entry.isDirectory())
         return dirs
-    } catch(err) {
-        console.error("Error reading directories:", err)
-        return []
-    }
-}
-function getFilesInSourceFolder(folder) {
-    try {
-        const entries = fs.readdirSync(ROOT + "/" + folder, { withFileTypes: true })
-        const files = entries
-            .filter(entry => !entry.isDirectory())
-        return files
     } catch(err) {
         console.error("Error reading directories:", err)
         return []
@@ -261,67 +120,267 @@ function getFilesInTargetFolder(letter, folder) {
     }
 }
 
-// === UI methods
-// Each line has a prefix, and then text. This method will
-// move to the line specified, add the prefix for that line
-// and then the text supplied... and clear the rest of the line
-function logLine(uiLineItem, text) {
-    const line_number = uiLineItem.line
-    if (line_number < curline) process.stdout.write("\r\x1b[" + (curline - line_number) + "A")
-    if (line_number > curline) process.stdout.write("\r\x1b[" + (line_number - curline) + "B")
-    curline = line_number
-    process.stdout.write("\r" + uiLineItem.prefix + (text ? text : '') + "\x1B[K ")
+
+function collectFromTarget() {
+    ui.lines.ACTION.value = ui.gold("Reading files from target...")
+    ui.lines.TARGET.value = ui.green(TARGET) + ": " + ui.plural(TARGETCOUNT, "song")
+    ui.draw()
+    TARGETCOUNT = 0
+    const letters = getDirectoriesInRoot(TARGET)
+    letters.forEach((letter) => {
+        const artists = getDirectoriesInRoot(TARGET + "/" + letter.name)
+        artists.forEach((artist) => {
+            const files = getFilesInTargetFolder(letter.name, artist.name)
+            files.forEach(item => {
+                if (!item.name.startsWith('.')) {
+                    TARGETCOUNT++
+                    ui.lines.TARGET.value = ui.green(TARGET) + ": " + ui.plural(TARGETCOUNT, "song")
+                    ui.lines.ARTIST.value = artist.name
+                    ui.lines.SONG.value = item.name
+                    ui.draw()
+                }
+            })
+        })
+    })
 }
-function gold(txt) {
-    return "\x1b[1;33m" + txt + "\x1b[0m"
+
+function collectFromSource() {
+    ui.lines.ACTION.value = ui.gold("Reading files from source...")
+    ui.draw()
+    SOURCECOUNT = 0
+    const folders = getDirectoriesInRoot(SOURCE)
+    folders.forEach((folder) => {
+        const dir = folder.name
+        if (!ARTISTS[dir]) {
+            ARTISTS_ORDER.push(dir)
+            ARTISTS[dir] = {files:[], folder:dir} // Collection of files
+        }
+        const artist = ARTISTS[dir]
+        const files = getFilesInSourceFolder(dir)
+        files.forEach((item) => {
+            if (!item.name.startsWith('.')) {
+                SOURCECOUNT++
+                ui.lines.SOURCE.value = ui.green(SOURCE) + ": " + ui.plural(ARTISTS_ORDER.length, "artist") + ", " + ui.plural(SOURCECOUNT, "song")
+                ui.lines.ARTIST.value = dir
+                ui.lines.SONG.value = item.name
+                ui.draw()
+                artist.files.push({
+                    source: dir + "/" + item.name,
+                    folder:dir, 
+                    filename:item.name
+                })
+            }
+        })
+    })
 }
-function green(txt) {
-    return "\x1b[1;32m" + txt + "\x1b[0m"
-}
-function red(txt) {
-    return "\x1b[1;31m" + txt + "\x1b[0m"
-}
-function centerInBar(txt) {
-    if (!txt) return BAR
-    const full_width = BAR.length
-    const txt_width = txt.length + 4 // space before and after
-    let half = Math.floor((full_width - txt_width) / 2)
-    let left = BAR.substring(0, half)
-    let right = left
-    if ((half + half + txt_width) < full_width) {
-        // Not exactly half
-        right += "="
+function getFilesInSourceFolder(folder) {
+    try {
+        const entries = fs.readdirSync(SOURCE + "/" + folder, { withFileTypes: true })
+        const files = entries
+            .filter(entry => !entry.isDirectory())
+        return files
+    } catch(err) {
+        console.error("Error reading directories:", err)
+        return []
     }
-    return left + "| " + txt + " |" + right
+}
+function getDirectoriesInRoot(location) {
+    try {
+        const entries = fs.readdirSync(location, { withFileTypes: true })
+        const dirs = entries
+            .filter(entry => entry.isDirectory())
+        return dirs
+    } catch(err) {
+        console.error("Error reading directories:", err)
+        return []
+    }
+}
+
+function purgeDataFromRootFolder(count, path, folder) {
+    // path guaranteed to NOT end with a slash
+    ui.lines.ACTION.value = ui.gold("Purging " + count)
+    ui.draw()
+    const root = path + (folder ? "/" + folder : "")
+    const entries = fs.readdirSync(root + "/", { withFileTypes: true })
+    entries.forEach((entry) => {
+        if (!entry.name.startsWith(".")) {
+            if (entry.isDirectory()) {
+                count = purgeDataFromRootFolder(count, root, entry.name)
+                fs.removeSync(root + "/" + entry.name)
+            } else {
+                count++
+                fs.removeSync(root + "/" + entry.name)
+                TARGETCOUNT--
+                ui.lines.TARGET.value = ui.green(TARGET) + ": " + ui.plural(TARGETCOUNT, "song")
+                ui.lines.ACTION.value = ui.gold("Purging " + count)
+                ui.lines.ARTIST.value = folder
+                ui.lines.SONG.value = entry.name
+                ui.draw()
+            }
+        }
+    })
+    return count
+}
+function writeSongsToFlashDrive(masterCount) {
+    let progress = 0
+    let copied = 0
+    ARTISTS_ORDER.forEach((dir, artist_index) => {
+        const artist = ARTISTS[dir]
+        const letter = artist.folder.substring(0,1)
+        let code = letter
+        if (artist_index < 100) code += "0"
+        if (artist_index < 10) code += "0"
+        code += artist_index
+        artist.files.forEach((file, file_index) => {
+            progress++
+            const status = ui.gold("Copying ") + ui.green(progress) + " of " + ui.gold(SOURCECOUNT) + ' songs' + ': ' + ui.green(((progress / SOURCECOUNT) * 100).toFixed(2) + "%")
+            ui.lines.ARTIST.value = artist.folder
+            ui.lines.SONG.value = file.filename
+            ui.lines.ACTION.value = status
+            ui.draw()
+
+            if (!fs.existsSync(TARGET + "/" + letter)) {
+                fs.ensureDirSync(TARGET + "/" + letter)
+            }
+            let code = ""
+            if (USE_NUMERIC_ORDER_CODE) {
+                code = file_index + ""
+                while (code.length < 3) { code = "0" + code}
+                code += " "
+            }
+            const outfile = TARGET + "/" + letter + "/" + artist.folder + "/" + code + file.filename
+            if (!fs.existsSync(TARGET + "/" + letter + "/" + artist.folder)) {
+                fs.ensureDirSync(TARGET + "/" + letter + "/" + artist.folder)
+            }
+            if (!fs.existsSync(outfile)) {
+                fs.copySync(SOURCE + "/" + file.source, outfile)
+                TARGETCOUNT++
+                ui.lines.TARGET.value = ui.green(TARGET) + ": " + ui.plural(TARGETCOUNT, "song")
+                copied++
+            }            
+        })
+    })
+
+    return copied
+}
+
+
+
+function main() {
+    console.clear()
+    ui.draw()
+    setCommandLineOptions()
+    let count = 0
+    ok = true
+    if (SOURCE != '') collectFromSource()
+    if (TARGET != '') collectFromTarget() 
+    ui.clean()   
+    while(ok) {
+        if (ISSUE != "") {
+            ui.lines.ACTION.value = ui.red(ISSUE)
+        }
+        ISSUE = ""
+        ui.draw()
+        ui.lines.ACTION.value = ""
+        let text = "What do you want to do?"
+        const answer = promptUser(text)
+        const upper = answer.trim().toUpperCase()
+        if (upper == "") {
+            ui.clean()
+        } else if (upper == "?") {
+            ui.lines.ACTION.value = ui.gold("Enter [Run,Source,SetSource,Target,SetTarget,Purge,Quit]")
+            ui.draw()
+        } else if (upper == "T" || upper == "RT") {
+            if (TARGET == '') {
+                ISSUE = "No Target set (use ST <path>)"
+            } else {
+                collectFromTarget()
+                ui.clean()
+            }
+        } else if (upper == "S" || upper == "RS") {
+            if (SOURCE == '') {
+                ISSUE = "No Source set (use SS <path>"
+            } else {
+                collectFromSource()
+                ui.clean()
+            }
+        } else if (upper == "P" || upper == "PURGE") {
+            if (TARGET == '') {
+                ISSUE = "No Target set (use ST <path>)"
+            } else {
+                if (TARGETCOUNT == -1) collectFromTarget()
+                purgeDataFromRootFolder(0, TARGET)
+                collectFromTarget()
+                ui.clean()
+            }
+        } else if (upper == "R" || upper == "GO" || upper == "W") {
+            if (TARGET == '') {
+                ISSUE = "No Target set (use ST <path>)"
+            } else if (SOURCE == '') {
+                ISSUE = "No Source set (use SS <path>)"
+            } else {
+                if (SOURCECOUNT == -1) {
+                    collectFromSource()
+                }
+                writeSongsToFlashDrive(0)
+                collectFromTarget()
+                ui.clean()
+            }
+        } else if (upper.startsWith("SS ")) {
+            const parts = answer.replace("  ", " ").split(" ")
+            let test = ""
+            if (parts.length > 1) {
+                test = parts[1]
+                if (test != "" && test.endsWith("/")) test = test.substring(0,test.length-1)
+            }
+            let isDir = isDirectory(test, "Usage: ST <path>")
+            if (isDir) {
+                SOURCE = test
+                ui.lines.SOURCE.value = ui.green(SOURCE)
+            }
+        } else if (upper.startsWith("ST")) {
+            const parts = answer.replace("  ", " ").split(" ")
+            let test = ""
+            if (parts.length > 1) {
+                test = parts[1]
+                if (test != "" && test.endsWith("/")) test = test.substring(0,test.length-1)
+            }
+            let isDir = isDirectory(test, "Usage: ST <path>")
+            if (isDir) {
+                TARGET = test
+                ui.lines.TARGET.value = ui.green(TARGET)
+            }
+        }
+        ok = (upper != "CTL-C" && !upper.startsWith("Q"))
+    }
 }
 
 function setCommandLineOptions() {
-    ROOT = process.argv.length > 2 ? process.argv[2] : ""
+    SOURCE = process.argv.length > 2 ? process.argv[2] : ""
     TARGET = process.argv.length > 3 ? process.argv[3] : ""
-    if (ROOT != "" && ROOT.endsWith("/")) ROOT = ROOT.substring(0,ROOT.length-1)
+    if (SOURCE != "" && SOURCE.endsWith("/")) SOURCE = SOURCE.substring(0,SOURCE.length-1)
+    if (SOURCE != "" && !isDirectory(SOURCE, "Invalid Source: " + SOURCE)) SOURCE = ""
+    if (SOURCE != "") ui.lines.SOURCE.value = ui.green(SOURCE)
+
     if (TARGET != "" && TARGET.endsWith("/")) TARGET = TARGET.substring(0,TARGET.length-1)
-    if (process.argv.length < 4) {
-        console.log("Usage: ")
-        console.log("node", path.basename(__filename), "<source>", "<target>")
-    }
+    if (TARGET != "" && !isDirectory(TARGET, "Invalid Target: " + TARGET)) TARGET = ""
+    if (TARGET != "") ui.lines.TARGET.value = ui.green(TARGET)
 }
-function promptForOkTorun() {
-    logLine(uiLines.ARTIST)
-    logLine(uiLines.SONG)
-    logLine(uiLines.ACTION)
-    const text = "\rType Y (to add missing), P (to Purge target) or any other to Quit... to continue: "
-    let answer = prompt(text)
-    let check = answer
-    if (!answer) {
-        answer = "Ctl-C"
-        check = "Ctl-C"
-    } else {
-        check = answer.trim().toUpperCase().substring(0,1)
+
+function isDirectory(path, issueIfNotDir) {
+    let isDir = false
+    try {
+        if (!path || path == "") {
+            isDir = false
+        } else {
+            isDir = fs.statSync(path).isDirectory()
+        }
+        if (!isDir) ISSUE = issueIfNotDir ? issueIfNotDir : ""
+    } catch(e) {
+        ISSUE = "Error: " + path
+        isDir = false
     }
-    if (check == "Y") {
-        answer = "Y"
-    } else if (check == "P") {
-        answer = "P"
-    }
-    return answer
+    return isDir
 }
+
+main()
