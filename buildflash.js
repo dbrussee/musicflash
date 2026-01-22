@@ -17,7 +17,7 @@ const USE_NUMERIC_ORDER_CODE = false // Add '000 ' codes in copied files
 const ui = {    
     initialized: false,
     lines: {
-        HEADING: { prefix: "-=♩♪♬| Music Flash Drive v1 |♬♪♩=-", value: ''},
+        HEADING: { prefix: "\x1b[4m / ♪♪♪ { Music Flash Drive v1] } ♪♪♪ \\ \x1b[0m", value: ''},
         SOURCE: { prefix: " Source:", value: '' }, // Path to Source
         TARGET: { prefix: " Target:", value: '' }, // Path to Target
         ARTIST: { prefix: " Artist:", value: '' }, // Current artist
@@ -44,6 +44,9 @@ const ui = {
         }
         // process.stdout.write("\r\x1b[1B")
     },
+    closeApp: () => {
+        console.clear()
+    },
     clean: () => {
         ui.lines.ARTIST.value = ""
         ui.lines.SONG.value = ""
@@ -69,6 +72,9 @@ const ui = {
     restore: () => {
         process.stdout.write("\x1b[u")
         return ""
+    },
+    underline: (text) => {
+        process.stdout.write("\x1b[4m" + text + "\x1b[0m")
     },
     down: (number_of_lines) => {
         return "\r\x1b[" + number_of_lines + "B"
@@ -285,12 +291,8 @@ function main() {
         let text = "What do you want to do?"
         const answer = promptUser(text)
         const upper = answer.trim().toUpperCase()
-        if (upper == "") {
-            ui.clean()
-        } else if (upper == "?") {
-            ui.lines.ACTION.value = ui.gold("Enter [Run,Source,SetSource,Target,SetTarget,Purge,Quit]")
-            ui.draw()
-        } else if (upper == "T" || upper == "RT") {
+        
+        if (upper == "T" || upper == "RT") {
             if (TARGET == '') {
                 ISSUE = "No Target set (use ST <path>)"
             } else {
@@ -326,7 +328,7 @@ function main() {
                 collectFromTarget()
                 ui.clean()
             }
-        } else if (upper.startsWith("SS ")) {
+        } else if (upper.startsWith("SS")) {
             const parts = answer.replace("  ", " ").split(" ")
             let test = ""
             if (parts.length > 1) {
@@ -344,7 +346,7 @@ function main() {
                 collectFromSource()
                 ui.clean()
             }
-        } else if (upper.startsWith("ST ")) {
+        } else if (upper.startsWith("ST")) {
             const parts = answer.replace("  ", " ").split(" ")
             let test = ""
             if (parts.length > 1) {
@@ -360,8 +362,12 @@ function main() {
                 collectFromTarget()
                 ui.clean()
             }
+        } else {
+            ui.lines.ACTION.value = ui.gold("R / RS / SS <path> RT / ST <path> / P / Q (Quit)")
+            ui.draw()
         }
         ok = (upper != "CTL-C" && !upper.startsWith("Q"))
+        if (!ok) ui.closeApp()
     }
 }
 
