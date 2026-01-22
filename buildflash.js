@@ -333,12 +333,18 @@ function main() {
                 test = parts[1]
                 if (test != "" && test.endsWith("/")) test = test.substring(0,test.length-1)
             }
-            let isDir = isDirectory(test, "Usage: ST <path>")
+            let isDir = isDirectory(test, "Usage: SS <path>")
             if (isDir) {
                 SOURCE = test
+                ARTISTS = {}
+                ARTISTS_ORDER = []
+                SOURCECOUNT = -1
                 ui.lines.SOURCE.value = ui.green(SOURCE)
+                ui.draw()
+                collectFromSource()
+                ui.clear()
             }
-        } else if (upper.startsWith("ST")) {
+        } else if (upper.startsWith("ST ")) {
             const parts = answer.replace("  ", " ").split(" ")
             let test = ""
             if (parts.length > 1) {
@@ -348,7 +354,11 @@ function main() {
             let isDir = isDirectory(test, "Usage: ST <path>")
             if (isDir) {
                 TARGET = test
+                TARGETCOUNT = -1
                 ui.lines.TARGET.value = ui.green(TARGET)
+                ui.draw()
+                collectFromTarget()
+                ui.clear()
             }
         }
         ok = (upper != "CTL-C" && !upper.startsWith("Q"))
