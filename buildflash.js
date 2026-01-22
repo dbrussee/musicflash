@@ -363,7 +363,7 @@ function main() {
                 ui.clean()
             }
         } else {
-            ui.lines.ACTION.value = ui.gold("R / RS / SS <path> RT / ST <path> / P / Q (Quit)")
+            ui.lines.ACTION.value = ui.gold("R / RS / SS <path> / RT / ST <path> / P / Q (Quit)")
             ui.draw()
         }
         ok = (upper != "CTL-C" && !upper.startsWith("Q"))
