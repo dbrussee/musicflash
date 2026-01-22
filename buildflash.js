@@ -342,7 +342,7 @@ function main() {
                 ui.lines.SOURCE.value = ui.green(SOURCE)
                 ui.draw()
                 collectFromSource()
-                ui.clear()
+                ui.clean()
             }
         } else if (upper.startsWith("ST ")) {
             const parts = answer.replace("  ", " ").split(" ")
@@ -358,7 +358,7 @@ function main() {
                 ui.lines.TARGET.value = ui.green(TARGET)
                 ui.draw()
                 collectFromTarget()
-                ui.clear()
+                ui.clean()
             }
         }
         ok = (upper != "CTL-C" && !upper.startsWith("Q"))
