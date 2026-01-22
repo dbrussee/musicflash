@@ -336,8 +336,8 @@ function main() {
             let isDir = isDirectory(test, "Usage: SS <path>")
             if (isDir) {
                 SOURCE = test
-                ARTISTS = {}
-                ARTISTS_ORDER = []
+                Object.keys(ARTISTS).forEach(key => delete ARTISTS[key]);
+                ARTISTS_ORDER.length = 0
                 SOURCECOUNT = -1
                 ui.lines.SOURCE.value = ui.green(SOURCE)
                 ui.draw()
