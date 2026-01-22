@@ -14,10 +14,30 @@ let SOURCECOUNT = -1
 let TARGETCOUNT = -1
 const USE_NUMERIC_ORDER_CODE = false // Add '000 ' codes in copied files
 
+function ESCCode(chars) {
+    return "\x1B[" + chars
+}
+function ESCRCode(chars) {
+    return "\r\x1B[" + chars
+}
+function ESC(chars) {
+    process.stdout.write(ESCCode(chars))
+}
+function ESCR(chars) {
+    process.stdout.write(ESCRCode(chars))
+}
+function ESCTextCode(before, text, after) {
+    return ESCCode(before) + text + ESCCode(after)
+}
+function ESCText(before, text, after) {
+    process.stdout.write(ESCCode(before) + text + ESCCode(after))
+}
+
+
 const ui = {    
     initialized: false,
     lines: {
-        HEADING: { prefix: "\x1b[4m / ♪♪♪ { Music Flash Drive v1] } ♪♪♪ \\ \x1b[0m", value: ''},
+        HEADING: { prefix: ESCTextCode("4m", " / ♪♪♪ { Music Flash Drive v1] } ♪♪♪ \\ ", "0m"), value: ''},
         SOURCE: { prefix: " Source:", value: '' }, // Path to Source
         TARGET: { prefix: " Target:", value: '' }, // Path to Target
         ARTIST: { prefix: " Artist:", value: '' }, // Current artist
@@ -34,13 +54,14 @@ const ui = {
             console.log(ui.lines.ACTION.prefix)
             ui.initialized = true
         } else {
-            process.stdout.write(ui.up(7))
-            process.stdout.write(ui.lineText(ui.lines.SOURCE))
-            process.stdout.write(ui.lineText(ui.lines.TARGET))
-            process.stdout.write(ui.lineText(ui.lines.ARTIST))
-            process.stdout.write(ui.lineText(ui.lines.SONG))
-            process.stdout.write(ui.lineText(ui.lines.ACTION))
-            process.stdout.write(ui.down(1))
+            ui.up(7)
+            ui.lineText(ui.lines.SOURCE, ui.red("Missing - Use SS <path>"))
+            ui.lineText(ui.lines.TARGET, ui.red("Missing - Use ST <path>"))
+            ui.lineText(ui.lines.ARTIST)
+            ui.lineText(ui.lines.SONG)
+            ui.lineText(ui.lines.ACTION)
+            ui.down(1)
+            process.stdout.write(ui.clearEOL())
         }
         // process.stdout.write("\r\x1b[1B")
     },
@@ -53,12 +74,12 @@ const ui = {
         ui.lines.ACTION.value = ""
         ui.draw()
     },
-    lineText: (itm) => {
-        let txt = ui.down(1)
-        txt += itm.prefix
-        txt += (itm.value == "" ? "" : " " + itm.value)
-        txt += ui.clearEOL()
-        return txt
+    lineText: (itm, missingText) => {
+        if (missingText == undefined) missingText = ""
+        ui.down(1)
+        let txt = itm.prefix
+        txt += " " + (itm.value == "" ? missingText : itm.value)
+        process.stdout.write(txt + ui.clearEOL())
     },
     plural: (count, text) => {
         if (count < 1) return ui.gold("No") + " " + text + "s"
@@ -66,38 +87,46 @@ const ui = {
         return ui.gold(count) + " " + text + "s"
     },
     save: () => {
-        process.stdout.write("\x1b[s")
+        ESC("s")
         return ""
     },
     restore: () => {
-        process.stdout.write("\x1b[u")
+        ESC("u")
         return ""
     },
     underline: (text) => {
-        process.stdout.write("\x1b[4m" + text + "\x1b[0m")
+        ESCText("4m", text, "0m")
+    },
+    hideCursor: () => {
+        ESC("?25l")
+    },
+    showCursor: () => {
+        ESC("?25h")
     },
     down: (number_of_lines) => {
-        return "\r\x1b[" + number_of_lines + "B"
+        ESCR(number_of_lines + "B")
     },
     up: (number_of_lines) => {
-        return "\r\x1b[" + number_of_lines + "A"
+        ESCR(number_of_lines + "A")
     },
     clearEOL: () => {
-        return "\x1B[K"
+        return ESCCode("K")
     },
     gold: (txt) =>{
-        return "\x1b[1;33m" + txt + "\x1b[0m"
+        return ESCTextCode("1;33m", txt, "0m")
     },
     green: (txt) => {
-        return "\x1b[1;32m" + txt + "\x1b[0m"
+        return ESCTextCode("1;32m", txt, "0m")
     },
     red: (txt) => {
-        return "\x1b[1;31m" + txt + "\x1b[0m"
+        return ESCTextCode("1;31m", txt, "0m")
     }
 
 }
 function promptUser(text) {
+    ui.showCursor()
     let answer = prompt(text.trim() + " " + ui.clearEOL())
+    ui.hideCursor()
     // let answer = prompt("\r" + text.trim() + "\x1B[K ")
     if (answer == null) answer = "Ctl-C"
     return answer
@@ -112,6 +141,7 @@ function getDirectoriesInRoot(location) {
     } catch(err) {
         console.error("Error reading directories:", err)
         return []
+    } finally {
     }
 }
 function getFilesInTargetFolder(letter, folder) {
@@ -123,6 +153,7 @@ function getFilesInTargetFolder(letter, folder) {
     } catch(err) {
         console.error("Error reading directories:", err)
         return []
+    } finally {
     }
 }
 
@@ -262,17 +293,23 @@ function writeSongsToFlashDrive(masterCount) {
                 fs.copySync(SOURCE + "/" + file.source, outfile)
                 TARGETCOUNT++
                 ui.lines.TARGET.value = ui.green(TARGET) + ": " + ui.plural(TARGETCOUNT, "song")
+                ui.draw()
                 copied++
             }            
         })
     })
-
     return copied
 }
 
 
 
 function main() {
+    process.on('SIGINT', () => {
+        ui.showCursor()
+        process.exit(0)
+    })
+    try {
+    ui.hideCursor()
     console.clear()
     ui.draw()
     setCommandLineOptions()
@@ -365,9 +402,15 @@ function main() {
         } else {
             ui.lines.ACTION.value = ui.gold("R / RS / SS <path> / RT / ST <path> / P / Q (Quit)")
             ui.draw()
+            ui.showCursor()
         }
         ok = (upper != "CTL-C" && !upper.startsWith("Q"))
         if (!ok) ui.closeApp()
+    }
+    } catch(e) {
+        console.error(e)
+    } finally {
+        ui.showCursor()
     }
 }
 
