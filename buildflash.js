@@ -121,7 +121,7 @@ function doCollectFromTarget() {
     })
     ui.updateName("ARTIST", "| Found " + ui.plural(TARGET_ARTISTCOUNT, "artist"))
     ui.updateName("SONG", "| Found " + ui.plural(TARGETCOUNT, "song"))
-    ui.updateName("ACTION", "| Finished reading target")
+    ui.updateName("ACTION", "| " + ui.green("Finished reading target"))
     ui.updateTargetDisplay(TARGET_ARTISTCOUNT, TARGETCOUNT, false, ui.green(TARGET))
     // ui.update("TARGET", ui.green(TARGET) + " (Artists: " + ui.green(TARGET_ARTISTCOUNT) + ", Songs: " + ui.green(TARGETCOUNT) + ")")
 }
@@ -159,7 +159,7 @@ function doCollectFromSource() {
     })
     ui.updateName("ARTIST", "| Found " + ui.plural(SOURCE_ARTISTS_ORDER.length, "artist"))
     ui.updateName("SONG", "| Found " + ui.plural(SOURCECOUNT, "song"))
-    ui.updateName("ACTION", "| Finished reading source")
+    ui.updateName("ACTION", "| " + ui.green("Finished reading source"))
     ui.updateSourceDisplay(SOURCE_ARTISTS_ORDER.length, SOURCECOUNT, false, ui.green(SOURCE))
 }
 function doPurgeTarget() {
@@ -193,7 +193,7 @@ function doPurgeTarget() {
         })
         bfile.delete(letterpath)
     })
-    ui.updateName("ARTIST", "| ", "SONG", "| Purged " + ui.plural(count, "song"), "ACTION", "| Purge complete")
+    ui.updateName("ARTIST", "| ", "SONG", "| Purged " + ui.plural(count, "song"), "ACTION", "| " + ui.green("Purge complete"))
     ui.updateTargetDisplay(TARGET_ARTISTCOUNT, TARGETCOUNT, false, ui.green(TARGET))
 }
 function doWriteSongsToFlashDrive() {
@@ -245,7 +245,7 @@ function doWriteSongsToFlashDrive() {
     })
     ui.updateName("ARTIST", "| Processed " + ui.plural(SOURCE_ARTISTS_ORDER.length, "artist") + ', ' + ui.plural(SOURCECOUNT, "song"))
     ui.updateName("SONG", "| Copied " + ui.plural(copied, "song") + (skipped > 0 ? ", Skipped " + ui.plural(skipped, "song") : ""))
-    ui.updateName("ACTION", "| Finished copying from Source to Target")
+    ui.updateName("ACTION", "| " + ui.green("Finished copying from Source to Target"))
     ui.updateTargetDisplay(TARGET_ARTISTCOUNT, TARGETCOUNT, false, ui.green(TARGET))
 }
 
