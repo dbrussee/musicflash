@@ -56,8 +56,6 @@ function doAction(action) {
         const upper = action.trim().toUpperCase()
         if (action == "Ctl-C") return false
         else if (upper == "Q") return false
-        else if (action == "") doHelp()
-        else if (upper == "?") doHelp()
         else if (upper == "S") doCollectFromSource()
         else if (upper == "T") doCollectFromTarget()
         else if (upper == "P") doPurgeTarget()
