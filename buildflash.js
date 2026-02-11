@@ -212,12 +212,19 @@ function doWriteSongsToFlashDrive() {
     let copied = 0
     let skipped = 0
     ui.updateName("ACTION", ui.gold("Preparing to build..."))
+    let letter_count = 1
+    let prior_letter = ""
     SOURCE_ARTISTS_ORDER.forEach((dir, artist_index) => {
-        const order_code = (1000 + artist_index).toString().substring(1)
-        // 001, 002, etc
         const artist = SOURCE_ARTISTS[dir]
         ui.updateName("ARTIST", ui.gold(artist.folder))
         const letter = artist.folder.substring(0,1)
+        if (letter != prior_letter) {
+            letter_count = 1
+            prior_letter = letter
+        }
+        const order_code = (1000 + letter_count++).toString().substring(1)
+        // 001, 002, etc
+
         artist.files.forEach((file, file_index) => {
             const fromfile = SOURCE + "/" + file.source
             const tofolder = TARGET + "/" + letter + "/" + artist.folder
