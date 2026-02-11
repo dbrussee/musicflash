@@ -55,7 +55,7 @@ function doAction(action) {
     try {
         const upper = action.trim().toUpperCase()
         if (action == "Ctl-C") return false
-        else if (upper == "Q") return false
+        else if (upper == "Q" || upper == "X") return false
         else if (upper == "S") doCollectFromSource()
         else if (upper == "T") doCollectFromTarget()
         else if (upper == "P") doPurgeTarget()
@@ -155,6 +155,9 @@ function doCollectFromSource() {
             }
         })
     })
+    SOURCE_ARTISTS_ORDER.sort((a,b) => {
+        return a < b
+    })
     ui.updateName("ARTIST", "| Found " + ui.plural(SOURCE_ARTISTS_ORDER.length, "artist"))
     ui.updateName("SONG", "| Found " + ui.plural(SOURCECOUNT, "song"))
     ui.updateName("ACTION", "| " + ui.green("Finished reading source"))
@@ -210,6 +213,8 @@ function doWriteSongsToFlashDrive() {
     let skipped = 0
     ui.updateName("ACTION", ui.gold("Preparing to build..."))
     SOURCE_ARTISTS_ORDER.forEach((dir, artist_index) => {
+        const order_code = (1000 + artist_index).toString().substring(1)
+        // 001, 002, etc
         const artist = SOURCE_ARTISTS[dir]
         ui.updateName("ARTIST", ui.gold(artist.folder))
         const letter = artist.folder.substring(0,1)
@@ -222,7 +227,7 @@ function doWriteSongsToFlashDrive() {
             }
             ui.updateName("SONG",ui.gold(file.filename))
             // const outfile = TARGET + "/" + letter + "/" + artist.folder + "/" + file.filename
-            if (bfile.copyFile(fromfile, tofolder, tofile)) {
+            if (bfile.copyFile(fromfile, tofolder, letter + order_code + "_" + tofile)) {
                 copied++
                 TARGETCOUNT++
             } else {
