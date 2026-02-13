@@ -1,10 +1,13 @@
 import bfile from "./utils/file.mjs"
 import ui from './utils/ui.mjs'
+import mp3 from "./utils/mp3.mjs"
 
 let SOURCE = "" // /Volumes/Media/Music/
 let SOURCECOUNT = -1
 const SOURCE_ARTISTS_ORDER = []
 let SOURCE_ARTISTS = {}
+
+let AFTER_OBJECT = null
 
 let TARGET = "" // /Volumes/MUSIC/
 let TARGETCOUNT = -1
@@ -25,6 +28,9 @@ function main() {
         reprompt = doAction(answer)
     }
     ui.wrapup()
+    if (AFTER_OBJECT != null) {
+        console.log(AFTER_OBJECT)
+    }
 }
 main()
 
@@ -59,8 +65,9 @@ function doAction(action) {
         else if (upper == "S") doCollectFromSource()
         else if (upper == "T") doCollectFromTarget()
         else if (upper == "P") doPurgeTarget()
-        else if (upper == "B") doWriteSongsToFlashDrive()
-        else if (upper == "D") doDebug()
+        else if (upper == "B") doWriteSongsToFlashDrive("")
+        else if (upper == "BT") doWriteSongsToFlashDrive("TOYOTA")
+        else if (upper == "D") { doDebug(); return false }
         else doHelp(action)
         return true
     } catch(err) {
@@ -70,13 +77,9 @@ function doAction(action) {
 
 function doDebug() {
     ui.updateName("ARTIST", "| Debugging output...")
-    let count = 0
-    const f = bfile.getAllFilesFrom(TARGET)
-    ui.updateName("SONG", "| Folder F: " + f)
-    // if (countF > 0) {
-    //     count = bfile.getMP3sFrom(TARGET + "/F/Fattburger").length
-    // }
-    ui.updateName("ACTION", "| ")
+    const meta = mp3.parse("/Volumes/Media/Music/ACDC/TNT.mp3")
+    AFTER_OBJECT = meta
+    ui.updateName("ACTION", "| " + meta.artist)
 }
 
 function doNothing() {
@@ -84,7 +87,7 @@ function doNothing() {
 }
 function doHelp() {
     ui.updateName("ARTIST", "| " + ui.blue("P (Purge all songs from Target drive"))
-    ui.updateName("SONG", "| " + ui.blue("B (Build Target from Source songs)"))
+    ui.updateName("SONG", "| " + ui.blue("B or BT (Build (for Toyota) from Source songs)"))
     ui.updateName("ACTION", "| " + ui.blue("Q or Ctl-C (Quit)"))
 }
 function doInvalid(action) {
@@ -197,7 +200,7 @@ function doPurgeTarget() {
     ui.updateName("ARTIST", "| ", "SONG", "| Purged " + ui.plural(count, "song"), "ACTION", "| " + ui.green("Purge complete"))
     ui.updateTargetDisplay(TARGET_ARTISTCOUNT, TARGETCOUNT, false, ui.green(TARGET))
 }
-function doWriteSongsToFlashDrive() {
+function doWriteSongsToFlashDrive(car) {
     if (TARGET == '' || SOURCE == '') {
         ui.updateName("ARTIST","| ", "SONG","| ", "ACTION","| ")
         if (SOURCE == '') {
@@ -234,7 +237,12 @@ function doWriteSongsToFlashDrive() {
             }
             ui.updateName("SONG",ui.gold(file.filename))
             // const outfile = TARGET + "/" + letter + "/" + artist.folder + "/" + file.filename
-            if (bfile.copyFile(fromfile, tofolder, letter + order_code + "_" + tofile)) {
+            if (bfile.copyFile(fromfile, tofolder, tofile)) {
+                if (car == "TOYOTA") {
+                    const meta = mp3.parse(tofolder + "/" + tofile)
+                    const tags = { title: letter + order_code + " " + meta.title }
+                    mp3.save(tags, tofolder + "/" + tofile)
+                }
                 copied++
                 TARGETCOUNT++
             } else {
