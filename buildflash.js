@@ -93,8 +93,8 @@ function doNothing() {
     ui.updateName("ACTION", "")
 }
 function doHelp() {
-    ui.updateName("ARTIST", "| " + ui.blue("P (Purge all songs from Target drive"))
-    ui.updateName("SONG", "| " + ui.blue("B or BT (Build (for Toyota) from Source songs)"))
+    ui.updateName("ARTIST", "| " + ui.blue("P (Purge all songs from Target drive)"))
+    ui.updateName("SONG", "| " + ui.blue("B (Build) or BT (for Toyota) from Source songs)"))
     ui.updateName("ACTION", "| " + ui.blue("Q or Ctl-C (Quit)"))
 }
 function doInvalid(action) {
@@ -232,7 +232,7 @@ function doWriteSongsToFlashDrive(car) {
             letter_count = 1
             prior_letter = letter
         }
-        const order_code = (CODE_MULTIPLIER + letter_count++).toString().substring(1)
+        const order_code = (CODE_MULTIPLIER + letter_count++).toString().substring(1) + "\b\b\b"
         // 001, 002, etc
 
         artist.files.forEach((file, file_index) => {
@@ -247,7 +247,7 @@ function doWriteSongsToFlashDrive(car) {
             if (bfile.copyFile(fromfile, tofolder, tofile)) {
                 if (car == "TOYOTA") {
                     const meta = mp3.parse(tofolder + "/" + tofile)
-                    const tags = { title: letter + order_code + " " + meta.title }
+                    const tags = { title: letter + order_code + meta.title }
                     mp3.save(tags, tofolder + "/" + tofile)
                 }
                 copied++

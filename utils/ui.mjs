@@ -2,8 +2,8 @@ import { isWorker } from "node:cluster";
 import process from "node:process"
 import promptSync from 'prompt-sync';
 const prompt = promptSync();
-const TITLE = " / ♪♪♪ { Music Flash Drive v1 } ♪♪♪ \\"
-const BAR = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+const TITLE = " / ♪♪♪ { Music Flash Drive ver 0.2 } ♪♪♪ \\"
+const TIBAR = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 
 function ESC(chars) {
     return "\x1B[" + chars
@@ -14,24 +14,19 @@ function ESCText(before, text, after) {
 function sysout(txt) {
     process.stdout.write(txt)
 }
-hideCursor: () => {
-    sysout(ESC("?25l"))
-}
-showCursor: () => {
-    sysout(ESC("?25h"))
-}
-
+const hideCursor = ESC("?25l")
+const showCursor = ESC("?25h")
 const savePosition = ESC("s")
 const restorePosition = ESC("u")
 const clearEOL = ESC("K")
 
 const lines = {
     HEADING: { pos: 0, prefix: TITLE, value: ''},
-    HEADING_BAR: {pos:1, prefix: BAR, value: ''},
+    HEADING_BAR: {pos:1, prefix: TIBAR, value: ''},
     ARTIST: { pos: 2, prefix: " Artist:", value: '' }, // Current artist
     SONG: { pos: 3, prefix: "   Song:", value: '' }, // Current Song
     ACTION: { pos: 4, prefix: " Action:", value: '' }, // Current activity
-    SPLIT: { pos: 5, prefix: BAR, value: ''},
+    SPLIT: { pos: 5, prefix: TIBAR, value: ''},
     TITLES: { pos: 6, prefix: "         Artists  Songs  Path", value: ''},
     SOURCE: { pos: 7, prefix: " Source:", value: '' }, // Path to Source
     TARGET: { pos: 8, prefix: " Target:", value: '' }, // Path to Target
@@ -64,7 +59,9 @@ const moveto = (row, col) => {
     return "\x1b[" + (row+1) + ";" + (col+1) + "H"
 }
 const updateDisplayLine = (line) => {
+    sysout(hideCursor)
     goto(line.pos, line.prefix.length + 1, line.value)
+    sysout(showCursor)
 }
 function promptAndGetResult(question) {
     // goto(6, 0, text + " ")
