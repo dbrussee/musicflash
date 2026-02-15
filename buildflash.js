@@ -15,6 +15,13 @@ let TARGET_ARTISTCOUNT = 0
 
 let ABORT_REQUESTED = false
 
+// The "code" is the first letter of the artist
+// plus a number of digits for incremental values
+// The number of digits is based on the multiplier
+// 100 leaves 2 digits... 1000 would leave 3 digits
+// Keep this as small as possible.
+const CODE_MULTIPLIER = 100 // Code = 
+
 function main() {
     ui.initialize()
     setCommandLineOptions()
@@ -225,7 +232,7 @@ function doWriteSongsToFlashDrive(car) {
             letter_count = 1
             prior_letter = letter
         }
-        const order_code = (1000 + letter_count++).toString().substring(1)
+        const order_code = (CODE_MULTIPLIER + letter_count++).toString().substring(1)
         // 001, 002, etc
 
         artist.files.forEach((file, file_index) => {
