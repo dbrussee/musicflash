@@ -243,7 +243,8 @@ function doWriteSongsToFlashDrive(car) {
             const tofolder = TARGET + "/" + artist.folder
             const tofile = file.filename
             const meta = mp3.parse(fromfile)
-            const album = (meta.album ? meta.album : "Unknown Album").replace("/", "-") // Sanitize out slashes from album names
+            let album = (meta.album ? meta.album : "Unknown Album").replace("/", "-") // Sanitize out slashes from album names
+            album = album.replace(/[<>:"|?*]/g, '') // Sanitize out invalid Windows characters from album names
             ui.updateName("ARTIST", ui.gold(artist.folder) + ": " + ui.gold(album)  )
             if (!bfile.folderExists(tofolder)) {
                 TARGET_ARTISTCOUNT++
