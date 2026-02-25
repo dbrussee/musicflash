@@ -157,6 +157,10 @@ function doCollectFromSource() {
             if (!item.name.startsWith('.')) {
                 SOURCECOUNT++
                 ui.updateSourceDisplay(SOURCE_ARTISTS_ORDER.length, SOURCECOUNT, true, ui.green(SOURCE))
+                
+                // const meta = mp3.parse(SOURCE + "/" +dir.name + "/" + item.name)
+                // const album = meta.album ? meta.album : "Unknown Album"
+
                 artist.files.push({
                     source: dir.name + "/" + item.name,
                     folder: dir.name, 
@@ -181,28 +185,28 @@ function doPurgeTarget() {
     }
     let count = 0
     ui.updateName("ACTION", ui.gold("Purging " + count))
-    const letters = bfile.getDirectoriesFrom(TARGET)
-    letters.forEach((letter) => {
-        const letterpath = TARGET + "/" + letter.name
-        const artists = bfile.getDirectoriesFrom(letterpath)
-        artists.forEach((artist) => {
-            const artistpath = letterpath + "/" + artist.name
-            const songs = bfile.getMP3sFrom(artistpath)
+    const artists = bfile.getDirectoriesFrom(TARGET)
+    artists.forEach((artist) => {
+        const artistpath = TARGET + "/" + artist.name
+        const albums = bfile.getDirectoriesFrom(artistpath)
+        albums.forEach((album) => {
+            const albumpath = artistpath + "/" + album.name
+            const songs = bfile.getMP3sFrom(albumpath)
             songs.forEach((song) => {
                 count++
                 ui.updateName("ACTION", ui.gold("Purging " + count))
-                ui.updateName("ARTIST", artist.name, "SONG", song.name)
-                const songpath = artistpath + "/" + song.name
+                ui.updateName("ARTIST", artist.name + " " + album.name, "SONG", song.name)
+                const songpath = albumpath + "/" + song.name
                 bfile.delete(songpath)
                 TARGETCOUNT--
                 ui.updateTargetDisplay(TARGET_ARTISTCOUNT, TARGETCOUNT, true, ui.green(TARGET))
             })
-            bfile.delete(artistpath)
+            bfile.delete(albumpath)
             TARGET_ARTISTCOUNT--
             ui.updateTargetDisplay(TARGET_ARTISTCOUNT, TARGETCOUNT, true, ui.green(TARGET))
 
         })
-        bfile.delete(letterpath)
+        bfile.delete(artistpath)
     })
     ui.updateName("ARTIST", "| ", "SONG", "| Purged " + ui.plural(count, "song"), "ACTION", "| " + ui.green("Purge complete"))
     ui.updateTargetDisplay(TARGET_ARTISTCOUNT, TARGETCOUNT, false, ui.green(TARGET))
@@ -226,7 +230,6 @@ function doWriteSongsToFlashDrive(car) {
     let prior_letter = ""
     SOURCE_ARTISTS_ORDER.forEach((dir, artist_index) => {
         const artist = SOURCE_ARTISTS[dir]
-        ui.updateName("ARTIST", ui.gold(artist.folder))
         const letter = artist.folder.substring(0,1)
         if (letter != prior_letter) {
             letter_count = 1
@@ -237,16 +240,19 @@ function doWriteSongsToFlashDrive(car) {
 
         artist.files.forEach((file, file_index) => {
             const fromfile = SOURCE + "/" + file.source
-            const tofolder = TARGET + "/" + letter + "/" + artist.folder
+            const tofolder = TARGET + "/" + artist.folder
             const tofile = file.filename
+            const meta = mp3.parse(fromfile)
+            const album = (meta.album ? meta.album : "Unknown Album").replace("/", "-") // Sanitize out slashes from album names
+            ui.updateName("ARTIST", ui.gold(artist.folder) + ": " + ui.gold(album)  )
             if (!bfile.folderExists(tofolder)) {
                 TARGET_ARTISTCOUNT++
             }
             ui.updateName("SONG",ui.gold(file.filename))
             // const outfile = TARGET + "/" + letter + "/" + artist.folder + "/" + file.filename
-            if (bfile.copyFile(fromfile, tofolder, tofile)) {
+            if (bfile.copyFile(fromfile, tofolder, album, tofile)) {
                 if (car == "TOYOTA") {
-                    const meta = mp3.parse(tofolder + "/" + tofile)
+                    // const meta = mp3.parse(tofolder + "/" + tofile)
                     const tags = { title: letter + order_code + meta.title }
                     mp3.save(tags, tofolder + "/" + tofile)
                 }

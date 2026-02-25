@@ -51,12 +51,13 @@ const bfile = {
     delete: (path) => {
         fs.removeSync(path)
     },
-    copyFile: (from, tofolder, tofilename) => {
+    copyFile: (from, tofolder, album, tofilename) => {
         fs.ensureDirSync(tofolder)
-        if (fs.existsSync(tofolder + "/" + tofilename)) {
+        fs.ensureDirSync(tofolder + "/" + album)
+        if (fs.existsSync(tofolder + "/" + album + "/" + tofilename)) {
             return false
         } else {
-            fs.copySync(from, tofolder + "/" + tofilename)
+            fs.copySync(from, tofolder + "/" + album + "/" + tofilename)
             return true
         }
     },
