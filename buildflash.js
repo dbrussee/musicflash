@@ -240,7 +240,7 @@ function doWriteSongsToFlashDrive(car) {
 
         artist.files.forEach((file, file_index) => {
             const fromfile = SOURCE + "/" + file.source
-            const tofolder = TARGET + "/" + artist.folder
+            const tofolder = TARGET + "/" + letter + order_code + " " + artist.folder
             const tofile = file.filename
             const meta = mp3.parse(fromfile)
             let album = (meta.album ? meta.album : "Unknown Album").replace("/", "-") // Sanitize out slashes from album names
@@ -251,7 +251,7 @@ function doWriteSongsToFlashDrive(car) {
             }
             ui.updateName("SONG",ui.gold(file.filename))
             // const outfile = TARGET + "/" + letter + "/" + artist.folder + "/" + file.filename
-            if (bfile.copyFile(fromfile, tofolder, album, letter + order_code + ' ' + tofile)) {
+            if (bfile.copyFile(fromfile, tofolder, album, tofile)) {
                 if (car == "TOYOTA") {
                     // const meta = mp3.parse(tofolder + "/" + tofile)
                     // const tags = { title: letter + order_code + meta.title }
