@@ -251,7 +251,7 @@ function doWriteSongsToFlashDrive(car) {
             }
             ui.updateName("SONG",ui.gold(file.filename))
             // const outfile = TARGET + "/" + letter + "/" + artist.folder + "/" + file.filename
-            if (bfile.copyFile(fromfile, tofolder, letter + order_code + " " + album, tofile)) {
+            if (bfile.copyFile(fromfile, tofolder, letter + order_code + " " + album, letter + order_code + " " + tofile)) {
                 if (car == "TOYOTA") {
                     // const meta = mp3.parse(tofolder + "/" + tofile)
                     // const tags = { title: letter + order_code + meta.title }
