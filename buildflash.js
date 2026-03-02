@@ -235,7 +235,7 @@ function doWriteSongsToFlashDrive(car) {
             letter_count = 1
             prior_letter = letter
         }
-        const order_code = (CODE_MULTIPLIER + letter_count++).toString().substring(1) + "\b\b\b"
+        const order_code = (CODE_MULTIPLIER + letter_count++).toString().substring(1)
         // 001, 002, etc
 
         artist.files.forEach((file, file_index) => {
@@ -251,11 +251,11 @@ function doWriteSongsToFlashDrive(car) {
             }
             ui.updateName("SONG",ui.gold(file.filename))
             // const outfile = TARGET + "/" + letter + "/" + artist.folder + "/" + file.filename
-            if (bfile.copyFile(fromfile, tofolder, album, tofile)) {
+            if (bfile.copyFile(fromfile, tofolder, album, letter + order_code + ' ' + tofile)) {
                 if (car == "TOYOTA") {
                     // const meta = mp3.parse(tofolder + "/" + tofile)
-                    const tags = { title: letter + order_code + meta.title }
-                    mp3.save(tags, tofolder + "/" + tofile)
+                    // const tags = { title: letter + order_code + meta.title }
+                    // mp3.save(tags, tofolder + "/" + tofile)
                 }
                 copied++
                 TARGETCOUNT++
