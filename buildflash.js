@@ -112,9 +112,9 @@ function doCollectFromTarget() {
     TARGET_ARTISTCOUNT = 0
     const artists = bfile.getDirectoriesFrom(TARGET)
     artists.forEach((artist) => {
+        TARGET_ARTISTCOUNT++
         const albums = bfile.getDirectoriesFrom(TARGET + "/" + artist.name)
         albums.forEach((album) => {
-            TARGET_ARTISTCOUNT++
             const songs = bfile.getMP3sFrom(TARGET + "/" + artist.name + "/" + album.name)
             songs.forEach(song => {
                 if (ABORT_REQUESTED) return
