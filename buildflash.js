@@ -110,15 +110,15 @@ function doCollectFromTarget() {
     ui.updateTargetDisplay("", "", true, ui.green(TARGET))
     TARGETCOUNT = 0
     TARGET_ARTISTCOUNT = 0
-    const letters = bfile.getDirectoriesFrom(TARGET)
-    letters.forEach((letter) => {
-        const artists = bfile.getDirectoriesFrom(TARGET + "/" + letter.name)
-        artists.forEach((artist) => {
+    const artists = bfile.getDirectoriesFrom(TARGET)
+    artists.forEach((artist) => {
+        const albums = bfile.getDirectoriesFrom(TARGET + "/" + artist.name)
+        albums.forEach((album) => {
             TARGET_ARTISTCOUNT++
-            const files = bfile.getMP3sFrom(TARGET + "/" + letter.name + "/" + artist.name)
-            files.forEach(item => {
+            const songs = bfile.getMP3sFrom(TARGET + "/" + artist.name + "/" + album.name)
+            songs.forEach(song => {
                 if (ABORT_REQUESTED) return
-                if (!item.name.startsWith('.')) {
+                if (!song.name.startsWith('.')) {
                     TARGETCOUNT++
                     ui.updateTargetDisplay(TARGET_ARTISTCOUNT, TARGETCOUNT, true, ui.green(TARGET))
                     // ui.update("TARGET", ui.green(TARGET) + " (Artists: " + ui.gold(TARGET_ARTISTCOUNT) + ", Songs: " + ui.gold(TARGETCOUNT) + ")")
