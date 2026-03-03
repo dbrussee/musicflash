@@ -10,7 +10,7 @@ const getAllFilesInFolder = (folder) => {
             return entries
         }
     } catch(err) {
-        console.error("Error reading directories from " + folder + ":", err)
+        // console.error("Error reading directories from " + folder + ":", err)
         return []
     }
 }
