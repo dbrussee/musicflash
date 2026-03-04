@@ -236,7 +236,7 @@ function doWriteSongsToFlashDrive(car) {
             letter_count = 1
             prior_letter = letter
         }
-        let order_code = (letter_count++).toString(36)
+        let order_code = (letter_count++).toString(36).toUpperCase()
         if (order_code.length < 2) order_code = "0" + order_code
         // 00, 01... 09, 0A... 0Z, 10, etc
 
