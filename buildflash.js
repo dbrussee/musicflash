@@ -235,8 +235,9 @@ function doWriteSongsToFlashDrive(car) {
             letter_count = 1
             prior_letter = letter
         }
-        const order_code = (CODE_MULTIPLIER + letter_count++).toString().substring(1)
-        // 001, 002, etc
+        let order_code = (letter_count++).toString(36)
+        if (order_code.length < 2) order_code = "0" + order_code
+        // 00, 01... 09, 0A... 0Z, 10, etc
 
         artist.files.forEach((file, file_index) => {
             const fromfile = SOURCE + "/" + file.source
@@ -250,12 +251,11 @@ function doWriteSongsToFlashDrive(car) {
                 TARGET_ARTISTCOUNT++
             }
             ui.updateName("SONG",ui.gold(file.filename))
-            // const outfile = TARGET + "/" + letter + "/" + artist.folder + "/" + file.filename
-            if (bfile.copyFile(fromfile, tofolder, letter + order_code + " " + album, letter + order_code + " " + tofile)) {
+            if (bfile.copyFile(fromfile, tofolder, album, tofile)) {
                 if (car == "TOYOTA") {
-                    // const meta = mp3.parse(tofolder + "/" + tofile)
-                    // const tags = { title: letter + order_code + meta.title }
-                    // mp3.save(tags, tofolder + "/" + tofile)
+                    const meta = mp3.parse(tofolder + "/" + tofile)
+                    const tags = { title: letter + order_code + meta.title }
+                    mp3.save(tags, tofolder + "/" + tofile)
                 }
                 copied++
                 TARGETCOUNT++
@@ -272,7 +272,6 @@ function doWriteSongsToFlashDrive(car) {
                 + ui.green(((progress / SOURCECOUNT) * 100).toFixed(2)) + "%"
             ui.updateName("ACTION",status)
             ui.updateTargetDisplay(TARGET_ARTISTCOUNT, TARGETCOUNT, true, ui.green(TARGET))
-            // ui.update("TARGET", ui.green(TARGET) + " (Artists: " + ui.gold(TARGET_ARTISTCOUNT) + ", Songs: " + ui.gold(TARGETCOUNT) + ")")
         })
     })
     ui.updateName("ARTIST", "| Processed " + ui.plural(SOURCE_ARTISTS_ORDER.length, "artist") + ', ' + ui.plural(SOURCECOUNT, "song"))
