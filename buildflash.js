@@ -202,11 +202,12 @@ function doPurgeTarget() {
                 ui.updateTargetDisplay(TARGET_ARTISTCOUNT, TARGETCOUNT, true, ui.green(TARGET))
             })
             bfile.delete(albumpath)
-            TARGET_ARTISTCOUNT--
             ui.updateTargetDisplay(TARGET_ARTISTCOUNT, TARGETCOUNT, true, ui.green(TARGET))
 
         })
         bfile.delete(artistpath)
+        TARGET_ARTISTCOUNT--
+        ui.updateTargetDisplay(TARGET_ARTISTCOUNT, TARGETCOUNT, true, ui.green(TARGET))
     })
     ui.updateName("ARTIST", "| ", "SONG", "| Purged " + ui.plural(count, "song"), "ACTION", "| " + ui.green("Purge complete"))
     ui.updateTargetDisplay(TARGET_ARTISTCOUNT, TARGETCOUNT, false, ui.green(TARGET))
@@ -254,7 +255,7 @@ function doWriteSongsToFlashDrive(car) {
             if (bfile.copyFile(fromfile, tofolder, album, tofile)) {
                 if (car == "TOYOTA") {
                     const meta = mp3.parse(tofolder + "/" + album + "/" + tofile)
-                    const tags = { title: letter + order_code + meta.title }
+                    const tags = { title: letter + order_code + " " + meta.title }
                     mp3.save(tags, tofolder + "/" + album + "/" + tofile)
                 }
                 copied++
